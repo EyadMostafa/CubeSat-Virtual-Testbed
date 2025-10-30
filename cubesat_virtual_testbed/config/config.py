@@ -1,34 +1,51 @@
 from __future__ import annotations
 
-import os
 import yaml
 import logging
 import warnings
 from pathlib import Path
-from typing import Literal, Any, Dict, Tuple
-from pydantic import BaseModel, Field, ValidationError
-from dotenv import load_dotenv
+from typing import Literal, Any, Dict, Tuple, cast
 
+from pydantic import (
+    BaseModel,
+    Field,
+    ValidationError,
+    ValidationInfo,
+    field_validator,
+)
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv(Path(__file__).parent.parent.parent / '.env')
 logger = logging.getLogger(__name__)
 
 # --- HELPER FUNCTIONS ---
 
-def get_source_root() -> Path:
-    """Returns the absolute path to the project's source root directory."""
-    return Path(__file__).parent.parent
+def get_project_root() -> Path:
+    """Returns the absolute path to the project's root directory."""
+    return Path(__file__).parent.parent.parent
 
-def deep_merge(source: dict, destination: dict) -> dict:
-    """Recursively merges a source dict into a destination dict."""
-    for key, value in source.items():
-        if isinstance(value, dict) and key in destination and isinstance(destination[key], dict):
-            destination[key] = deep_merge(value, destination[key])
-        else:
-            destination[key] = value
-    return destination
 
-# --- PYDANTIC MODELS: THE SINGLE SOURCE OF TRUTH FOR DEFAULTS ---
+def yaml_config_settings_source(settings: BaseSettings) -> dict[str, Any]:
+    """
+    A Pydantic-Settings source loader that loads values from our default config.yaml.
+    This is loaded *after* .env files but *before* the default model fields.
+    """
+    config_path = get_project_root() / "cubeSat_virtual_testbed" / "config" / "config.yaml"
+    
+    try:
+        with open(config_path, 'r') as f:
+            yaml_config = yaml.safe_load(f)
+            if isinstance(yaml_config, dict):
+                logger.debug(f"Successfully loaded default config from {config_path}")
+                return yaml_config
+            else:
+                logger.warning(f"Default config file at {config_path} is malformed. Using defaults.")
+                return {}
+    except FileNotFoundError:
+        logger.warning(f"Default config file not found at {config_path}. Using defaults.")
+        return {}
+    except Exception as e:
+        logger.error(f"Error reading default YAML config: {e}. Using defaults.")
+        return {}
 
 class GeneralSettings(BaseModel):
     """General application settings."""
@@ -83,20 +100,67 @@ class PayloadSettings(BaseModel):
     camera_sensor: CameraSensorSettings = Field(default_factory=CameraSensorSettings)
     ai_model: AIModelSettings = Field(default_factory=AIModelSettings)
 
-class SecretsSettings(BaseModel):
-    """Container for API keys and other secrets. Loaded from .env."""
-    gee_api_key: str | None = Field(None, description="Google Earth Engine API Key.")
-    # Add other keys like Sentinel Hub, etc. here
 
-class CVTConfig(BaseModel):
-    """The main configuration object, bringing all settings together."""
+# --- THE MAIN CONFIGURATION OBJECT (BaseSettings) ---
+
+class CVTConfig(BaseSettings):
+    """
+    The main configuration object, inheriting from BaseSettings to automatically
+    load from .env, environment variables, and the YAML file.
+    """
+    
+    # --- Top-level Settings ---
     general: GeneralSettings = Field(default_factory=GeneralSettings)
     simulation: SimulationSettings = Field(default_factory=SimulationSettings)
     tle: TLESSettings = Field(default_factory=TLESSettings)
     fidelity: FidelitySettings = Field(default_factory=FidelitySettings)
     constraints: ConstraintsSettings = Field(default_factory=ConstraintsSettings)
     payload: PayloadSettings = Field(default_factory=PayloadSettings)
-    secrets: SecretsSettings = Field(default_factory=SecretsSettings)
+    
+    # --- Secrets ---
+    GEE_API_KEY: str | None = Field(None)
+    SENTINEL_HUB_CLIENT_ID: str | None = Field(None)
+    SENTINEL_HUB_CLIENT_SECRET: str | None = Field(None)
+
+    # --- Pydantic-Settings Configuration ---
+    model_config = SettingsConfigDict(
+        env_file=get_project_root() / ".env",
+        env_file_encoding='utf-8',
+        
+        env_prefix='CVT_',
+        
+        # 3. Enable nested-dict loading from env vars
+        # CVT_GENERAL_DEBUG=true will map to `general.debug`
+        env_nested_delimiter='_',
+
+        case_sensitive=False,
+    )
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: "PydanticBaseSettingsSource",
+        env_settings: "PydanticBaseSettingsSource",
+        dotenv_settings: "PydanticBaseSettingsSource",
+        file_secret_settings: "PydanticBaseSettingsSource",
+    ) -> tuple["PydanticBaseSettingsSource", ...]:
+        """
+        Customizes the loading priority to inject the YAML file.
+        Priority Order (highest to lowest):
+        1. init_settings (runtime arguments)
+        2. env_settings (System environment variables)
+        3. dotenv_settings (.env file)
+        4. yaml_config_settings_source (custom config.yaml loader)
+        5. file_secret_settings (Docker secrets, etc.)
+        """
+        return (
+            init_settings,
+            env_settings,
+            dotenv_settings,
+            yaml_config_settings_source,
+            file_secret_settings,
+        )
 
 # --- LOGGING SETUP FUNCTION ---
 
@@ -121,79 +185,37 @@ def setup_logging(config: CVTConfig):
     
     logger.debug(f"Root logger configured to level: {log_level_str}")
 
-# --- THE UNIFIED LOADER FUNCTION ---
+# --- GLOBAL SINGLETON LOADER ---
 
-def load_config(path: str | Path | None = None) -> CVTConfig:
+def load_config() -> CVTConfig:
     """
-    Loads configuration from YAML and environment variables, providing
-    Pydantic defaults for missing values.
-    
-    Priority: Env Vars > config.yaml > Pydantic Defaults
+    Loads the configuration singleton.
     """
-    config_path = Path(path) if path else get_source_root() / "config/config.yaml"
-    
-    final_config_dict = CVTConfig().model_dump()
-    
     logging.basicConfig(level=logging.INFO, format="[%(levelname)s] [%(name)s] %(message)s")
-
-    try:
-        with open(config_path, 'r') as f:
-            yaml_config = yaml.safe_load(f)
-            if isinstance(yaml_config, dict):
-                final_config_dict = deep_merge(yaml_config, final_config_dict)
-                logger.info(f"Loaded configuration from {config_path}")
-            else:
-                logger.warning(f"Config file at {config_path} is malformed. Using defaults.")
-    except FileNotFoundError:
-        logger.info(f"Default config file not found at {config_path}. Using defaults.")
-    except Exception as e:
-        logger.error(f"Error reading YAML config: {e}. Using defaults.")
-
-    env_vars = {
-        "general": {
-            "debug": os.getenv("CVT_DEBUG"),
-            "log_level": os.getenv("CVT_LOG_LEVEL"),
-        },
-        "simulation": {
-            "tick_rate_hz": os.getenv("CVT_SIM_TICK_RATE_HZ")
-        },
-        "secrets": {
-            "gee_api_key": os.getenv("GEE_API_KEY")
-        },
-        "fidelity": {
-            "enable_atmospheric_drag": os.getenv("CVT_ENABLE_ATMOSPHERIC_DRAG")
-            # Add other fidelity flags as needed
-        }
-    }
     
-    cleaned_env_vars = {
-        k: {k2: v2 for k2, v2 in v.items() if v2 is not None}
-        for k, v in env_vars.items() if isinstance(v, dict)
-    }
-    cleaned_env_vars.update({k: v for k, v in env_vars.items() if not isinstance(v, dict) and v is not None})
-    
-    final_config_dict = deep_merge(cleaned_env_vars, final_config_dict)
-
     try:
-        config = CVTConfig(**final_config_dict)
+        config = CVTConfig()
+        
+        # --- Finalize Logging Setup ---
         setup_logging(config)
+        
         if config.general.supress_user_warnings:
             warnings.filterwarnings("ignore", category=UserWarning)
+            
         logger.debug("Configuration loaded and validated successfully.")
+        
+        if config.general.debug:
+            logger.debug("--- FINAL CONFIGURATION ---")
+            logger.debug(config.model_dump_json(indent=2))
+            logger.debug("---------------------------")
+            
         return config
+        
     except ValidationError as e:
-        config = CVTConfig()
-        setup_logging(config)
         logger.error(f"!!! CONFIGURATION VALIDATION ERROR !!!\n{e}\n"
-                     "!!! FALLING BACK TO DEFAULT SETTINGS !!!")
+                     f"!!! FALLING BACK TO DEFAULT SETTINGS (WHICH MAY FAIL) !!!")
+        config = cast(CVTConfig, CVTConfig.model_construct())
+        setup_logging(config)
         return config
 
 config = load_config()
-
-# --- EXAMPLE USAGE ---
-# from cubeSat_virtual_testbed.config.config import config
-#
-# if config.general.debug:
-#     print("Debug mode is ON")
-#
-# api_key = config.secrets.gee_api_key

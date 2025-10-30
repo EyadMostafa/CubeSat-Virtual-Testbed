@@ -1,0 +1,56 @@
+[project]
+# --- Core Project Metadata ---
+name = "cubesat-virtual-testbed"
+version = "0.1.0"
+description = "A high-fidelity digital twin for CubeSat simulation, focusing on physics and on-board AI constraints."
+readme = "README.md"
+requires-python = ">=3.10"
+
+# --- Primary Dependencies ---
+dependencies = [
+#     # Web Server & Networking
+    "fastapi",                  # The core web framework
+    "uvicorn[standard]",        # ASGI server to run FastAPI (includes websockets)
+    
+#     # Config & Schemas
+    "pydantic",
+    "pydantic-settings",        # For loading .env and config files
+    "pyyaml",                   # For parsing the config.yaml
+
+#     # Physics, Math & Orbit
+    # "numpy",                    # For all vector, matrix, and quaternion math
+    # "scipy",                    # For numerical integration (solve_ivp)
+#     "poliastro",                # For high-level orbit propagation
+    
+#     # Environmental Models
+#     "pyNRLMSISE-00",            # Atmospheric density model
+#     "wmm-calculator",           # World Magnetic Model
+
+#     "earthengine-api",          # Google Earth Engine API
+#     "Pillow",                   # For image processing
+#     "opencv-python"             # For advanced image processing
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "httpx", 
+    "black", 
+]
+
+ai_tflite = [
+    "tensorflow-lite-runtime"
+]
+
+ai_onnx = [
+    "onnxruntime"
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools]
+package-dir = {"" = "cubesat_virtual_testbed"}
+packages = { find = { where = ["cubesat_virtual_testbed"] } }
