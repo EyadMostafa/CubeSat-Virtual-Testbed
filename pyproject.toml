@@ -4,53 +4,44 @@ name = "cubesat-virtual-testbed"
 version = "0.1.0"
 description = "A high-fidelity digital twin for CubeSat simulation, focusing on physics and on-board AI constraints."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10" # We are targeting 3.11
 
 # --- Primary Dependencies ---
 dependencies = [
-#     # Web Server & Networking
-    "fastapi",                  # The core web framework
-    "uvicorn[standard]",        # ASGI server to run FastAPI (includes websockets)
-    
-#     # Config & Schemas
-    "pydantic",
-    "pydantic-settings",        # For loading .env and config files
-    "pyyaml",                   # For parsing the config.yaml
+    "fastapi>=0.96,<1.0",
+    "uvicorn[standard]>=0.25,<1.0",
 
-#     # Physics, Math & Orbit
-    # "numpy",                    # For all vector, matrix, and quaternion math
-    # "scipy",                    # For numerical integration (solve_ivp)
-#     "poliastro",                # For high-level orbit propagation
-    
-#     # Environmental Models
-#     "pyNRLMSISE-00",            # Atmospheric density model
-#     "wmm-calculator",           # World Magnetic Model
+    "pydantic>=2.4,<3.0",
+    "pydantic-settings>=2.0,<3.0",
+    "pyyaml>=6.0,<7.0",
 
-#     "earthengine-api",          # Google Earth Engine API
-#     "Pillow",                   # For image processing
-#     "opencv-python"             # For advanced image processing
+    # --- Physics, Math & Orbit (Pinned for Python 3.11) ---
+    "numpy~=1.26",      
+    "scipy~=1.13",      
+    "astropy>=5.0,<6.0",
+    "poliastro~=0.17",
+    "tle-tools>=0.2.3"  
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "httpx", 
-    "black", 
+    "pytest>=8.0,<9.0",
+    "httpx>=0.26,<0.30",
+    "black>=24.0,<25.0",
 ]
 
 ai_tflite = [
-    "tensorflow-lite-runtime"
+    "tensorflow-lite-runtime>=2.13,<3.0",
 ]
 
 ai_onnx = [
-    "onnxruntime"
+    "onnxruntime>=1.15,<2.0",
 ]
 
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+where = ["cvt"]
 
-[tool.setuptools]
-package-dir = {"" = "cubesat_virtual_testbed"}
-packages = { find = { where = ["cubesat_virtual_testbed"] } }
