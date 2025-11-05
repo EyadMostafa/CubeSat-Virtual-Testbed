@@ -209,3 +209,4 @@ __marimo__/
 # Other
 local_testing/
 .history/
+.python-version
