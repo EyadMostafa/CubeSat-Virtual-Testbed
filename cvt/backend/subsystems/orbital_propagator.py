@@ -34,7 +34,7 @@ class OrbitalPropagator:
         current_time = Time.now()
         propagated_orbit = self.orbit.propagate(current_time)
 
-        r, v = list(propagated_orbit.r.value), list(propagated_orbit.v.value)
+        r, v = propagated_orbit.r.value.tolist(), propagated_orbit.v.value.tolist()
 
         return r, v
 

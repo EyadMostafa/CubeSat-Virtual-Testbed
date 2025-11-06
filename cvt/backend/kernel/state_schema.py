@@ -20,13 +20,12 @@ class Alert(BaseModel):
     level: Literal['INFO', 'WARNING', 'CRITICAL'] = Field(..., description="Severity of the alert")
     timestamp: datetime = Field(default_factory=datetime.now(timezone.utc), description="Time the alert was generated")
     message: str = Field(..., description="A human-readable alert message")
-    source: str = Field(..., description="The subsystem that generated the alert (e.g., 'PowerSystem', 'ADCS')")
+    source: str = Field(..., description="The module or subsystem that generated the alert (e.g., 'OrbitalPropagator', 'ADCS')")
 
 # --- Sub-system State Schemas ---
 
 class OrbitalState(BaseModel):
     """Defines the satellite's position and motion in space."""
-    timestamp: datetime = Field(default_factory=datetime.now(timezone.utc), description="Simulation time for this state packet (UTC)")
     position: List[float] = Field(default=[0.0, 0.0, 0.0], description="Position vector (x, y, z) in ECEF or a similar frame (km)")
     velocity: List[float] = Field(default=[0.0, 0.0, 0.0], description="Velocity vector (vx, vy, vz) (km/s)")
 
@@ -60,6 +59,11 @@ class SatelliteState(BaseModel):
     attitude: AttitudeState = Field(default_factory=AttitudeState)
     hardware: HardwareState = Field(default_factory=HardwareState)
     tasks: TaskState = Field(default_factory=TaskState)
+    timestamp: datetime = Field(default_factory=datetime.now(timezone.utc), description="Simulation time for this state packet (UTC)")
     
     alerts: List[Alert] = Field(default=[], description="List of all active system alerts")
+
+    model_config = {
+        'frozen': False
+    }
 
