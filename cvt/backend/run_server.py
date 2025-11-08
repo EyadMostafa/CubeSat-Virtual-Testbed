@@ -18,10 +18,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-@app.get("/status", response_model=GeneralSettings)
+@app.get("/status")
 async def get_status():
     """Returns the 'general' section of the config."""
-    return config.general
+    return config
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

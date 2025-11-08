@@ -26,13 +26,12 @@ class OrbitalPropagator:
         """
         self.orbit: Orbit = self._load_orbit()
 
-    def get_current_state(self) -> Tuple[list[float], list[float]]:
+    def get_state_at_time(self, time: Time) -> Tuple[list[float], list[float]]:
         """
         Calculates the satellite's current position and velocity.
         This is the main function called by the SimulationKernel on every tick.
         """
-        current_time = Time.now()
-        propagated_orbit = self.orbit.propagate(current_time)
+        propagated_orbit = self.orbit.propagate(time)
 
         r, v = propagated_orbit.r.value.tolist(), propagated_orbit.v.value.tolist()
 

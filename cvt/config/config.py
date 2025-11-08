@@ -29,7 +29,7 @@ def yaml_config_settings_source() -> dict[str, Any]:
     A Pydantic-Settings source loader that loads values from our default config.yaml.
     This is loaded *after* .env files but *before* the default model fields.
     """
-    config_path = get_project_root() / "cubesat_virtual_testbed" / "config" / "config.yaml"
+    config_path = get_project_root() / "cvt" / "config" / "config.yaml"
     
     try:
         with open(config_path, 'r') as f:
@@ -57,6 +57,12 @@ class SimulationSettings(BaseModel):
     """Core simulation loop settings."""
     tick_rate_hz: int = Field(10, description="The 'heartbeat' of the simulation in ticks per second.")
     orbit_propagator: str = Field("poliastro_tle", description="Method for orbit calculation.")
+    time_warp_factor: float = Field(1.0, description="Simulation speed. 1.0 = real-time, 1000.0 = 1000x real-time.")
+
+class SpaceCraft(BaseModel):
+    mass_kg: float = Field(4.5)
+    surface_area_m2: float = Field(0.1)
+    drag_coefficient: float = Field(2.2)
 
 class TLESSettings(BaseModel):
     """Default TLE for the 'poliastro_tle' propagator."""
@@ -113,6 +119,7 @@ class CVTConfig(BaseSettings):
     # --- Top-level Settings ---
     general: GeneralSettings = Field(default_factory=GeneralSettings)
     simulation: SimulationSettings = Field(default_factory=SimulationSettings)
+    spacecraft: SpaceCraft = Field(default_factory=SpaceCraft)
     tle: TLESSettings = Field(default_factory=TLESSettings)
     fidelity: FidelitySettings = Field(default_factory=FidelitySettings)
     constraints: ConstraintsSettings = Field(default_factory=ConstraintsSettings)
@@ -130,8 +137,6 @@ class CVTConfig(BaseSettings):
         
         env_prefix='CVT_',
         
-        # 3. Enable nested-dict loading from env vars
-        # CVT_GENERAL_DEBUG=true will map to `general.debug`
         env_nested_delimiter='_',
 
         case_sensitive=False,
@@ -154,7 +159,7 @@ class CVTConfig(BaseSettings):
         3. dotenv_settings (.env file)
         4. yaml_config_settings_source (custom config.yaml loader)
         5. file_secret_settings (Docker secrets, etc.)
-        """
+        """ 
         return (
             init_settings,
             env_settings,

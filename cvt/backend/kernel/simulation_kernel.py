@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 from logging import getLogger
 from datetime import datetime, timezone
+from astropy.time import Time
+import astropy.units as u
 
 from cvt.config.config import config
 from cvt.backend.kernel.state_schema import SatelliteState, Alert
@@ -21,12 +23,15 @@ class SimulationKernel:
     def __init__(self):
         self.state: SatelliteState = SatelliteState()
         self.tick_duration: float = 1.0 / config.simulation.tick_rate_hz
+        self.time_warp_factor: float = config.simulation.time_warp_factor
         self.running: bool = False
         self._simulation_task: asyncio.Task | None = None
 
         self.propagator: OrbitalPropagator = OrbitalPropagator()
+        self.current_sim_time: Time = Time.now()
         
         logger.info(f"SimulationKernel initialized. Tick duration: {self.tick_duration:.2f}s")
+        logger.info(f"Time Warp Factor: {self.time_warp_factor}x")
 
     async def start_simulation(self):
         """
@@ -82,10 +87,14 @@ class SimulationKernel:
         Executes a single, atomic tick of the simulation.
         """
         self.state.alerts.clear()
-        timestamp = datetime.now(timezone.utc)
+
+        time_step_seconds = self.tick_duration * self.time_warp_factor
+        self.current_sim_time = self.current_sim_time + (time_step_seconds * u.s)
+        timestamp = self.current_sim_time.to_datetime(timezone.utc)
+
+        position, velocity = self.propagator.get_state_at_time(self.current_sim_time)
         
         # --- Phase 1: Orbit ---
-        position, velocity = self.propagator.get_current_state()
         self.state.orbit.position = position
         self.state.orbit.velocity = velocity
         

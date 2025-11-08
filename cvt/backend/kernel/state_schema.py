@@ -18,7 +18,7 @@ from enum import Enum
 class Alert(BaseModel):
     """A structured alert message."""
     level: Literal['INFO', 'WARNING', 'CRITICAL'] = Field(..., description="Severity of the alert")
-    timestamp: datetime = Field(default_factory=datetime.now(timezone.utc), description="Time the alert was generated")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Time the alert was generated")
     message: str = Field(..., description="A human-readable alert message")
     source: str = Field(..., description="The module or subsystem that generated the alert (e.g., 'OrbitalPropagator', 'ADCS')")
 
@@ -59,7 +59,7 @@ class SatelliteState(BaseModel):
     attitude: AttitudeState = Field(default_factory=AttitudeState)
     hardware: HardwareState = Field(default_factory=HardwareState)
     tasks: TaskState = Field(default_factory=TaskState)
-    timestamp: datetime = Field(default_factory=datetime.now(timezone.utc), description="Simulation time for this state packet (UTC)")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Simulation time for this state packet (UTC)")
     
     alerts: List[Alert] = Field(default=[], description="List of all active system alerts")
 
