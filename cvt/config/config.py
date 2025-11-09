@@ -60,9 +60,9 @@ class SimulationSettings(BaseModel):
     time_warp_factor: float = Field(1.0, description="Simulation speed. 1.0 = real-time, 1000.0 = 1000x real-time.")
 
 class SpaceCraft(BaseModel):
-    mass_kg: float = Field(4.5)
-    surface_area_m2: float = Field(0.1)
-    drag_coefficient: float = Field(2.2)
+    mass_kg: float = Field(4.5, description="Total 'wet' mass (including fuel, if any) of the spacecraft in kilograms.")
+    surface_area_m2: float = Field(0.1, description="Average cross-sectional area for drag/SRP calculation, in meters^2. (e.g., 0.1 for a 3U CubeSat).")
+    drag_coefficient: float = Field(2.2, description="Coefficient of drag (unitless). 2.2 is a standard, safe default for a box-like satellite.")
 
 class TLESSettings(BaseModel):
     """Default TLE for the 'poliastro_tle' propagator."""

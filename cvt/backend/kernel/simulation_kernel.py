@@ -5,6 +5,7 @@ from logging import getLogger
 from datetime import datetime, timezone
 from astropy.time import Time
 import astropy.units as u
+import math
 
 from cvt.config.config import config
 from cvt.backend.kernel.state_schema import SatelliteState, Alert
@@ -29,6 +30,8 @@ class SimulationKernel:
 
         self.propagator: OrbitalPropagator = OrbitalPropagator()
         self.current_sim_time: Time = Time.now()
+
+        self.EARTH_ANGULAR_VELOCITY_RAD_PER_SEC = (2 * math.pi) / 86164.0905
         
         logger.info(f"SimulationKernel initialized. Tick duration: {self.tick_duration:.2f}s")
         logger.info(f"Time Warp Factor: {self.time_warp_factor}x")
@@ -93,6 +96,9 @@ class SimulationKernel:
         timestamp = self.current_sim_time.to_datetime(timezone.utc)
 
         position, velocity = self.propagator.get_state_at_time(self.current_sim_time)
+
+        total_seconds = (self.current_sim_time - self.propagator.orbit.epoch).to_value(u.s)
+        earth_angle = (total_seconds * self.EARTH_ANGULAR_VELOCITY_RAD_PER_SEC) % (2 * math.pi)
         
         # --- Phase 1: Orbit ---
         self.state.orbit.position = position
@@ -108,6 +114,7 @@ class SimulationKernel:
         
 
         # --- Broadcast State ---
+        self.state.earth_rotation_angle = earth_angle
         self.state.timestamp = timestamp
         await connection_manager.broadcast(self.state)
         

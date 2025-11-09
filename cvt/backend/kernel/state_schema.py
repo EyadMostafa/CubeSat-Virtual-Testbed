@@ -58,6 +58,7 @@ class SatelliteState(BaseModel):
     orbit: OrbitalState = Field(default_factory=OrbitalState)
     attitude: AttitudeState = Field(default_factory=AttitudeState)
     hardware: HardwareState = Field(default_factory=HardwareState)
+    earth_rotation_angle: float = Field(0.0, description="Current rotation of Earth in radians (for Y-up)")
     tasks: TaskState = Field(default_factory=TaskState)
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Simulation time for this state packet (UTC)")
     
