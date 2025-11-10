@@ -4,7 +4,7 @@ name = "cubesat-virtual-testbed"
 version = "0.1.0"
 description = "A high-fidelity digital twin for CubeSat simulation, focusing on physics and on-board AI constraints."
 readme = "README.md"
-requires-python = ">=3.10" # We are targeting 3.11
+requires-python = ">=3.10"
 
 # --- Primary Dependencies ---
 dependencies = [
@@ -24,19 +24,19 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=8.0,<9.0",
-    "httpx>=0.26,<0.30",
-    "black>=24.0,<25.0",
-]
+# dev = [
+#     "pytest>=8.0,<9.0",
+#     "httpx>=0.26,<0.30",
+#     "black>=24.0,<25.0",
+# ]
 
-ai_tflite = [
-    "tensorflow-lite-runtime>=2.13,<3.0",
-]
+# ai_tflite = [
+#     "tensorflow-lite-runtime>=2.13,<3.0",
+# ]
 
-ai_onnx = [
-    "onnxruntime>=1.15,<2.0",
-]
+# ai_onnx = [
+#     "onnxruntime>=1.15,<2.0",
+# ]
 
 [build-system]
 requires = ["setuptools>=61.0"]
