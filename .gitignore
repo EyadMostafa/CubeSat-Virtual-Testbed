@@ -211,5 +211,4 @@ local_testing/
 .history/
 .python-version
 node_modules/
-cvt_design_doc.md
 cvt_study_guide.md

@@ -6,7 +6,7 @@ general:
 simulation:
   tick_rate_hz: 10
   orbit_propagator: "poliastro_tle"
-  time_warp_factor: 1000.0
+  time_warp_factor: 500.0
 
 spacecraft: # Arbitrary, to be determined values and fields
   mass_kg: 4.5
