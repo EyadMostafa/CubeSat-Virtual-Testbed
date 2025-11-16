@@ -1,18 +1,23 @@
-# 🛰️ **CubeSat Virtual Testbed (CVT)**
+# 🛰️ CubeSat Virtual Testbed (CVT)
+*A lightweight, ML-centric digital twin for CubeSat onboard AI research.*
 
-A **high-fidelity, real-time "digital twin"** of a CubeSat, designed as a **testbed** for AI payloads and GNC (Guidance, Navigation, and Control) algorithms.
+CVT is a **real-time virtual testbed** designed to evaluate TinyML models under the same **power, compute, timing, and imaging constraints** experienced by CubeSats in orbit.  
+Instead of modeling high-fidelity spacecraft physics, CVT focuses on the constraints that actually determine TinyML performance in space:
 
-This project serves as the **primary development and validation tool** for the AI payload on our research team's real-world CubeSat.  
-Its purpose is to provide a _"sim-to-real"_ environment that is as **rough** (physics) and **constrained** (hardware) as space itself — enabling testing and validation of AI methodologies under realistic mission conditions.
+- Battery charge/discharge behavior  
+- Sunlight vs. eclipse cycles  
+- Model latency and energy usage  
+- Compute bottlenecks and scheduling delays  
+- Degraded space-like imagery  
+- Mission throughput and missed image opportunities  
 
----
+The purpose of CVT is to provide a **realistic and repeatable environment** to answer key research questions:
 
-## 🚀 **About the Project**
+> **How do different TinyML models behave when deployed on a constrained on-orbit platform?**  
+> **Which compression or optimization techniques yield the best accuracy-per-compute-per-joule?**  
+> **How do compute delays and energy usage translate into mission-level impacts such as missed captures, reduced throughput, and power blackouts?**
 
-This is **not just a 3D visualization** — it’s a **full-stack, "source-of-truth" simulation** that models the entire spacecraft as a coupled system.
-
-The core goal is to run a **"bake-off"** between different TinyML methodologies (e.g., _quantization_ vs. _pruning_) to evaluate how their unique performance profiles (power draw, CPU time) impact the satellite’s **mission performance** (e.g., pointing accuracy, battery life) over a simulated **24-hour orbital run**.
-For more details checkout the **cvt_design_doc.md**
+This makes CVT a practical, research-driven environment for comparing TinyML methods (quantization, pruning, distillation, efficient architectures) in a controlled, repeatable 24-hour orbital simulation.
 
 ---
 

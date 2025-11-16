@@ -212,3 +212,5 @@ local_testing/
 .python-version
 node_modules/
 cvt_study_guide.md
+cvt_full_design.md
+cvt_light_design_doc.md

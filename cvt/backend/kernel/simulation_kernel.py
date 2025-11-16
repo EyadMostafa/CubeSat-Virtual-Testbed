@@ -103,7 +103,7 @@ class SimulationKernel:
         # --- Phase 1: Orbit ---
         self.state.orbit.position = position
         self.state.orbit.velocity = velocity
-        
+
         # --- Phase 2: Attitude ---
         
 
