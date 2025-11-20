@@ -1,5 +1,5 @@
 # 🛰️ CubeSat Virtual Testbed (CVT)
-*A lightweight, ML-centric digital twin for CubeSat onboard AI research.*
+*A lightweight, ML-centric digital twin for CubeSat onboard AI research.* (This is just an initial phase and the rest of the projects development will be delayed) 
 
 CVT is a **real-time virtual testbed** designed to evaluate TinyML models under the same **power, compute, timing, and imaging constraints** experienced by CubeSats in orbit.  
 Instead of modeling high-fidelity spacecraft physics, CVT focuses on the constraints that actually determine TinyML performance in space:
